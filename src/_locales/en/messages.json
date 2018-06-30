@@ -1,0 +1,14 @@
+{
+    "name": {
+        "message": "Tab Exporter",
+        "description": "Title of extension"
+    },
+    "description": {
+        "message": "Export tabs in various forms for sharing or later use",
+        "description": "Description of extension"
+    },
+    "ashtml": {
+        "message": "Download as HTML",
+        "description": "Button text html download"
+    }
+}
