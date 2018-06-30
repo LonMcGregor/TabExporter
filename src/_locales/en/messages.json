@@ -14,5 +14,17 @@
     "mytabs": {
         "message": "My Saved Tabs (%s)",
         "description": "Title on downloaded html page, formatted with date"
+    },
+    "host": {
+        "message": "Group by Host",
+        "description": "Checkbox label for gouping by host"
+    },
+    "window": {
+        "message": "Group by Window",
+        "description": "Checkbox label for group by window"
+    },
+    "stack": {
+        "message": "Group by Stack (vivaldi browser only)",
+        "description": "Checkbox label for group by stack"
     }
 }
