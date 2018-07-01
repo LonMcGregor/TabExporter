@@ -24,7 +24,23 @@
         "description": "Checkbox label for group by window"
     },
     "stack": {
-        "message": "Group by Stack (vivaldi browser only)",
+        "message": "Group by Stack",
         "description": "Checkbox label for group by stack"
+    },
+    "vivaldionly": {
+        "message": "Stacks are only available with <a href='https://vivaldi.com'>Vivaldi Browser</a>",
+        "description": "Reason for no stacks"
+    },
+    "windowtext": {
+        "message": "Window: ",
+        "description": "Label for produced page for window"
+    },
+    "stacktext": {
+        "message": "Stack: ",
+        "description": "Label for produced page for stack"
+    },
+    "indent": {
+        "message": "Use Indent Style",
+        "description": "Checkbox label for adding indent styling"
     }
 }

@@ -15,16 +15,14 @@ function getTitle(){
  * Make a tab item for html
  * @param {*} tab Tab object
  * @param doc Document object
- * @param depth int of how deep to style
  * @returns dom of tab item
  */
-function generateTabItem(tab, doc, depth){
+function generateTabItem(tab, doc){
     const par = doc.createElement("p");
     const item = document.createElement("a");
     item.href = tab.url;
     item.innerText = tab.title;
     par.appendChild(item);
-    par.style.marginLeft = depth * 4 + "px";
     return par;
 }
 
@@ -32,20 +30,22 @@ function generateTabItem(tab, doc, depth){
  * Create all the dom for the tabs, by host
  * @param {*} hosts object of host key: tab array
  * @param {*} doc document object
- * @param {*} depth int for styling
  * @returns dom array of items
  */
-function genHosts(hosts, doc, depth){
-    const generatedDOM = [];
+function genHosts(hosts, doc){
+    const generatedDOM = document.createElement("div");
     const multiHost = Object.keys(hosts).length > 1;
     for(let key in hosts){
-        if(multiHost){
-            generatedDOM.push(genTitle(key, doc, depth));
+        const oneHost = doc.createElement("div");
+        oneHost.className = multiHost ? "hosts" : "onehost";
+        if(multiHost && key!=="other"){
+            oneHost.appendChild(genTitle(key, doc, 4));
         }
         const sorted = hosts[key].sort((a, b) => a.index - b.index);
         sorted.forEach(tab => {
-            generatedDOM.push(generateTabItem(tab, doc, depth + 1));
+            oneHost.appendChild(generateTabItem(tab, doc));
         });
+        generatedDOM.appendChild(oneHost);
     }
     return generatedDOM;
 }
@@ -54,17 +54,19 @@ function genHosts(hosts, doc, depth){
  * Create all the dom for hosts, by stack
  * @param {*} stacks object of stack string: host object
  * @param {*} doc document object
- * @param {*} depth int for styling
  * @returns dom array of items
  */
-function genStacks(stacks, doc, depth){
-    let generatedDOM = [];
+function genStacks(stacks, doc){
+    const generatedDOM = document.createElement("div");
     const multiStack = Object.keys(stacks).length > 1;
     for(let key in stacks){
-        if(multiStack){
-            generatedDOM.push(genTitle(key, doc, depth));
+        const oneStack = doc.createElement("div");
+        oneStack.className = multiStack ? "stacks" : "onestack";
+        if(multiStack && key!=="none"){
+            oneStack.appendChild(genTitle(chrome.i18n.getMessage("stacktext") + key, doc, 3));
         }
-        generatedDOM = generatedDOM.concat(genHosts(stacks[key], doc, multiStack ? depth + 1 : depth));
+        oneStack.appendChild(genHosts(stacks[key], doc));
+        generatedDOM.appendChild(oneStack);
     }
     return generatedDOM;
 }
@@ -79,7 +81,6 @@ function genStacks(stacks, doc, depth){
 function genTitle(message, doc, depth){
     const header = doc.createElement("h"+depth);
     header.innerText = message;
-    header.style.marginLeft = depth * 4 + "px";
     return header;
 }
 
@@ -87,17 +88,19 @@ function genTitle(message, doc, depth){
  * Generate the dom for windows, by stack
  * @param {*} windows object of indow id: stack object
  * @param {*} doc document object
- * @param {*} depth int for styling
  * @returns dom array of items generated
  */
-function genWindows(windows, doc, depth){
-    let generatedDOM = [];
+function genWindows(windows, doc){
+    const generatedDOM = document.createElement("div");
     const multiWindow = Object.keys(windows).length > 1;
     for(let key in windows){
-        if(multiWindow){
-            generatedDOM.push(genTitle(key, doc, depth));
+        const oneWindow = doc.createElement("div");
+        oneWindow.className = multiWindow ? "windows" : "onewindow";
+        if(multiWindow && key!=="all"){
+            oneWindow.appendChild(genTitle(chrome.i18n.getMessage("windowtext") + key, doc, 2));
         }
-        generatedDOM = generatedDOM.concat(genStacks(windows[key], doc, multiWindow ? depth + 1 : depth));
+        oneWindow.appendChild(genStacks(windows[key], doc));
+        generatedDOM.appendChild(oneWindow);
     }
     return generatedDOM;
 }
@@ -111,12 +114,25 @@ function generateHtml(tabs){
     const tabPage = document.implementation.createHTMLDocument(getTitle());
     const encoding = tabPage.createElement("meta");
     encoding.charset = "utf-8";
+    if($("#indent").checked){
+        const style = tabPage.createElement("style");
+        style.innerHTML = `
+        .windows, .stacks, .hosts{
+            border-left: 3px solid #eee;
+        }
+        .windows:hover, .stacks:hover, .hosts:hover{
+            border-left: 3px solid #aaa;
+        }
+        .windows, .stacks, .hosts, p {
+            margin-left: 6px;
+            padding-left: 4px;
+        }
+        `;
+        tabPage.head.appendChild(style);
+    }
     tabPage.head.appendChild(encoding);
     tabPage.body.appendChild(genTitle(getTitle(), tabPage, 1));
-    const doms = genWindows(tabs, tabPage, 2);
-    doms.forEach(item => {
-        tabPage.body.appendChild(item);
-    });
+    tabPage.body.appendChild(genWindows(tabs, tabPage));
     return tabPage;
 }
 
@@ -262,8 +278,6 @@ function presentPage(page){
     });
 }
 
-// TODO WOULD ORGANISING BE MORE EFFICIENT IF DONE THE OTHER WAY AROUND - by host, then by stack, then by window?
-
 /**
  * Make and download the HTML page
  */
@@ -278,11 +292,51 @@ function makeHtml(){
 }
 
 /**
- * Init page i18n and listeners
+ * Something was clicked, update storage
  */
-$("#html").innerText = chrome.i18n.getMessage("ashtml");
-$("#html").addEventListener("click", makeHtml);
-$("#host + span").innerText = chrome.i18n.getMessage("host");
-$("#window + span").innerText = chrome.i18n.getMessage("window");
-$("#stack + span").innerText = chrome.i18n.getMessage("stack");
-document.title = chrome.i18n.getMessage("name");
+function checkClick(){
+    chrome.storage.sync.set({
+        host: $("#host").checked,
+        window: $("#window").checked,
+        stack: $("#stack").checked,
+        style: $("#indent").checked
+    });
+}
+
+/**
+ * Init page i18n and listeners
+ * @param savedPrefs from storage
+ */
+function init(savedPrefs){
+    $("#html").innerText = chrome.i18n.getMessage("ashtml");
+    $("#html").addEventListener("click", makeHtml);
+    $("#host + span").innerText = chrome.i18n.getMessage("host");
+    $("#window + span").innerText = chrome.i18n.getMessage("window");
+    $("#stack + span").innerText = chrome.i18n.getMessage("stack");
+    $("#indent + span").innerText = chrome.i18n.getMessage("indent");
+
+    $("#host").checked = savedPrefs.host;
+    $("#window").checked = savedPrefs.window;
+    $("#stack").checked = savedPrefs.stack;
+    $("#indent").checked = savedPrefs.style;
+
+    $("#host").addEventListener("input", checkClick);
+    $("#window").addEventListener("input", checkClick);
+    $("#stack").addEventListener("input", checkClick);
+    $("#indent").addEventListener("input", checkClick);
+
+    if(navigator.userAgent.toLowerCase().indexOf("vivaldi") === -1){
+        $("#vivaldi").innerHTML = chrome.i18n.getMessage("vivaldionly");
+        $("#stack").checked = false;
+        $("#stack").disabled = true;
+    }
+
+    document.title = chrome.i18n.getMessage("name");
+}
+
+chrome.storage.sync.get({
+    host: false,
+    window: false,
+    stack: false,
+    style: false
+}, init);
