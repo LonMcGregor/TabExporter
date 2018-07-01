@@ -4,7 +4,7 @@
         "description": "Title of extension"
     },
     "description": {
-        "message": "Export tabs in various forms for sharing or later use",
+        "message": "Export your open tabs into HTML links for sharing or later use",
         "description": "Description of extension"
     },
     "ashtml": {
