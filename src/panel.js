@@ -273,9 +273,7 @@ function presentPage(page){
         {type: "text/html"}
     );
     const blob = window.URL.createObjectURL(htmlfile);
-    chrome.tabs.create({url: blob}, () => {
-        window.URL.revokeObjectURL(blob);
-    });
+    chrome.tabs.create({url: blob});
 }
 
 /**
